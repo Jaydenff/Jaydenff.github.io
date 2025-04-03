@@ -5,12 +5,12 @@
 
     --theme-primary: #ce1b1b;
     --theme-secondary: #3b1b3a;
-    --theme-accent: #6D7275;
+    --theme-accent: #bbbbbb;
     --theme-surface: #e4d4ca;
 
     --theme-primary-content: #ce1b1b;
     --themne-secondary-content: #ffe607;
-    --theme-accent-content: #C7D6D5;
+    --theme-accent-content: #ffffff;
     --theme-surface-content: #f55246; 
 
     color : var(--theme-surface-content)
@@ -39,7 +39,7 @@ body {
     border-radius: 100%;
     border: solid;
     border-width: 2px;
-    border-color: orangered
+    border-color: rgb(255, 255, 255)
 }
 
 .bg-primary {
