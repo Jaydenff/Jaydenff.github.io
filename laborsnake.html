@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glowing Orbs Snake</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(180deg, #555, #222); /* Gradient for background */
+            animation: waveBackground 15s infinite alternate; /* Slower and smoother wave animation */
+            height: 100vh; /* Ensure the body covers the full viewport height */
+            position: relative;
+        }
+
+        /* Animation to create a smooth wave fade for the background */
+        @keyframes waveBackground {
+            0% {
+                background: linear-gradient(180deg, #555, #222);
+            }
+            100% {
+                background: linear-gradient(180deg, #444, #111);
+            }
+        }
+
+        /* Glowing orb style */
+        .orb {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%; /* Make it a circle */
+            background-color: #fff;
+            box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.8); /* Glowing effect */
+            animation: orbGlow 1.5s infinite alternate; /* Glowing animation */
+            z-index: 1; /* Ensure orbs are on top */
+        }
+
+        /* Animation for glowing effect */
+        @keyframes orbGlow {
+            0% {
+                box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.8);
+            }
+            100% {
+                box-shadow: 0 0 20px 10px rgba(255, 255, 255, 1);
+            }
+        }
+
+        /* Snake body part style */
+        .snake {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%; /* Snake body parts are circles */
+            background-color: #fff;
+            box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.8); /* Glowing effect */
+            z-index: 2; /* Ensure snake parts are on top of orbs */
+        }
+    </style>
+</head>
+<body>
+
+<script>
+    let orbEmoji = ''; // No emoji, just orbs
+    let orbs = []; // All the random orbs in the game
+    let snakeBody = [{x: window.innerWidth / 2, y: window.innerHeight / 2}]; // The body of the snake (array of positions)
+    let snakeLength = 1; // Starting length of the snake
+    let snakeHead = {x: window.innerWidth / 2, y: window.innerHeight / 2}; // The head of the snake
+    let cursorX = window.innerWidth / 2; // Starting cursor position
+    let cursorY = window.innerHeight / 2;
+    let moveSpeed = 0.1; // How much the snake head moves toward the cursor each frame
+    let smoothingFactor = 0.02; // Controls how smooth and slow the snake follows the cursor (lower values = slower movement)
+    let bodySpacing = 40; // The distance between body parts
+
+    // Function to create random glowing orbs at random positions
+    function createRandomOrb() {
+        let orb = document.createElement('div');
+        orb.classList.add('orb');
+        orb.style.left = `${Math.random() * window.innerWidth}px`;
+        orb.style.top = `${Math.random() * window.innerHeight}px`;
+        document.body.appendChild(orb);
+        orbs.push(orb);
+    }
+
+    // Create initial random orbs on the screen
+    for (let i = 0; i < 10; i++) {
+        createRandomOrb();
+    }
+
+    // Function to update the position of the snake
+    function updateSnake() {
+        // Calculate movement towards the cursor with a smoothing factor
+        let dx = cursorX - snakeHead.x;
+        let dy = cursorY - snakeHead.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Gradually move the snake's head towards the cursor with a smoothing factor
+        if (distance > 1) {
+            snakeHead.x += dx * smoothingFactor;
+            snakeHead.y += dy * smoothingFactor;
+        }
+
+        // Move the body of the snake and space out the body parts more
+        for (let i = snakeLength - 1; i > 0; i--) {
+            // Spacing out the body parts
+            snakeBody[i] = {...snakeBody[i - 1]}; // Move body parts
+            // Add spacing between each part by adjusting their positions
+            snakeBody[i].x = snakeBody[i].x + (snakeBody[i].x - snakeBody[i - 1].x) * 0.5; 
+            snakeBody[i].y = snakeBody[i].y + (snakeBody[i].y - snakeBody[i - 1].y) * 0.5;
+        }
+        snakeBody[0] = {...snakeHead}; // Update the head position
+
+        // Check for collisions with the random orbs
+        for (let i = orbs.length - 1; i >= 0; i--) {
+            let orb = orbs[i];
+            let orbX = parseFloat(orb.style.left);
+            let orbY = parseFloat(orb.style.top);
+            let orbDist = Math.sqrt((orbX - snakeHead.x) ** 2 + (orbY - snakeHead.y) ** 2);
+
+            if (orbDist < 40) { // If the snake head "eats" the orb
+                orb.remove(); // Remove the orb from the screen
+                orbs.splice(i, 1); // Remove it from the array
+                snakeLength++; // Increase the snake length
+                snakeBody.push({x: snakeBody[snakeBody.length - 1].x, y: snakeBody[snakeBody.length - 1].y}); // Add new body part
+                createRandomOrb(); // Spawn a new orb randomly
+            }
+        }
+
+        // Render the snake's body
+        document.querySelectorAll('.snake').forEach(snakePart => snakePart.remove()); // Remove old snake elements
+        for (let i = 0; i < snakeBody.length; i++) {
+            let part = document.createElement('div');
+            part.classList.add('snake');
+            part.style.left = `${snakeBody[i].x}px`;
+            part.style.top = `${snakeBody[i].y}px`;
+            document.body.appendChild(part);
+        }
+    }
+
+    // Function to track the cursor movement and update global variables
+    function trackCursor(event) {
+        cursorX = event.clientX;
+        cursorY = event.clientY;
+    }
+
+    // Set up the mousemove event listener to track cursor
+    document.addEventListener('mousemove', trackCursor);
+
+    // Continuous animation loop using requestAnimationFrame for smooth updates
+    function gameLoop() {
+        updateSnake(); // Update the snake's movement
+        requestAnimationFrame(gameLoop); // Continue the loop
+    }
+
+    // Start the game loop
+    gameLoop();
+
+</script>
+
+</body>
+</html>
